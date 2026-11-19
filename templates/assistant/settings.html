@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Settings · JARVIS{% endblock %}
+{% block page_title %}Settings{% endblock %}
+{% block page_sub %}Voice, applications and safety preferences.{% endblock %}
+{% block content %}
+<div class="settings-layout">
+  <nav class="settings-nav" aria-label="Settings sections">
+    <a href="#speech">Speech</a><a href="#apps">Applications</a><a href="#weather">Weather</a><a href="#safety">Safety</a>
+  </nav>
+  <form method="post" class="stack" novalidate>
+    {% csrf_token %}
+    <section class="card" id="speech">
+      <h3>Speech</h3>
+      <label class="field"><span>Speech language</span>{{ form.language }}</label>
+      <label class="setting-row">{{ form.voice_enabled }}<div><b>Voice responses</b><small>Speak replies aloud with your browser's voice.</small></div></label>
+      <label class="field"><span>Response voice</span>
+        <select id="voice-picker" data-saved="{{ form.voice_name.value|default:'' }}"><option value="">Automatic</option></select>
+        {{ form.voice_name }}
+      </label>
+      <p class="hint" id="bn-voice-note"></p>
+      <label class="setting-row">{{ form.auto_listen }}<div><b>Auto-listening</b><small>Listen again after each successful command.</small></div></label>
+    </section>
+
+    <section class="card" id="apps">
+      <h3>Application shortcuts</h3>
+      <p class="hint">Only the apps listed here can be launched. Leave a field blank to auto-detect. Otherwise paste the full path to an .exe file, for example <code>C:\Program Files\Google\Chrome\Application\chrome.exe</code>. WhatsApp and Telegram fall back to their web versions when the app is missing.</p>
+      {% for f in path_fields %}
+      <label class="field"><span>{{ f.label }}</span>{{ f }}{% for e in f.errors %}<small class="err">{{ e }}</small>{% endfor %}</label>
+      {% endfor %}
+    </section>
+
+    <section class="card" id="weather">
+      <h3>Weather</h3>
+      <p class="hint">Used when you ask for the weather without naming a city. Data comes from Open-Meteo and needs internet.</p>
+      <label class="field"><span>{{ form.weather_city.label }}</span>{{ form.weather_city }}</label>
+    </section>
+
+    <section class="card" id="safety">
+      <h3>Safety</h3>
+      <label class="setting-row"><input type="checkbox" checked disabled><div><b>Confirm dangerous commands</b><small>Always on. Shutdown needs a click on Confirm Shutdown.</small></div></label>
+    </section>
+
+    <div class="savebar"><button type="submit" class="btn btn-primary"><i class="bi bi-check2"></i> Save settings</button></div>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Command History · JARVIS{% endblock %}
+{% block page_title %}Command history{% endblock %}
+{% block page_sub %}Your latest 100 commands, newest first.{% endblock %}
+{% block content %}
+<section class="card">
+  <div class="toolbar">
+    <label class="search"><i class="bi bi-search"></i><input type="text" id="h-search" placeholder="Search commands" aria-label="Search commands"></label>
+    <div class="chips" role="group" aria-label="Filter by status">
+      <button type="button" class="chip active" data-filter="all">All</button>
+      <button type="button" class="chip" data-filter="success">Success</button>
+      <button type="button" class="chip" data-filter="error">Failed</button>
+      <button type="button" class="chip" data-filter="pending">Pending</button>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table id="history-table">
+      <thead><tr><th>Command</th><th>Type</th><th>Result</th><th>Time</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for h in entries %}
+        <tr data-status="{{ h.status }}"><td>{{ h.command_text }}</td><td>{{ h.command_type }}</td><td>{{ h.result }}</td>
+            <td>{{ h.created_at|date:"M d, Y h:i A" }}</td>
+            <td><span class="badge" data-state="{{ h.status }}">{{ h.get_status_display }}</span></td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if not entries %}<p class="empty">No commands yet. Go to the dashboard and say or type one.</p>{% endif %}
+  <p class="empty" id="h-empty" hidden>No commands match your search or filter.</p>
+</section>
+{% endblock %}

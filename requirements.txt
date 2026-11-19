@@ -1,0 +1,5 @@
+Django>=5.2,<5.3
+tzdata; sys_platform == "win32"
+Pillow>=10.0; sys_platform == "win32"
+# Optional: server-side text-to-speech fallback (browser speech is used by default)
+pyttsx3>=2.90; sys_platform == "win32"

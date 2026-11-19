@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_sub %}Speak, type or click to control your PC.{% endblock %}
+{% block content %}
+<section class="card fx-banner" aria-hidden="true"><canvas id="fx-canvas"></canvas></section>
+
+<section class="kpis" aria-label="Overview">
+  <div class="card kpi"><span class="kpi-ico t-blue"><i class="bi bi-lightning-charge"></i></span><div><small>Commands today</small><strong id="kpi-today">{{ stats.commands_today }}</strong></div></div>
+  <div class="card kpi"><span class="kpi-ico t-green"><i class="bi bi-check2-circle"></i></span><div><small>Success rate</small><strong id="kpi-rate">{% if stats.success_rate is None %}–{% else %}{{ stats.success_rate }}%{% endif %}</strong></div></div>
+  <div class="card kpi"><span class="kpi-ico t-violet"><i class="bi bi-chat-left-text"></i></span><div><small>Last command</small><strong class="sm" id="kpi-last">{{ stats.last_command|default:"None yet" }}</strong></div></div>
+  <div class="card kpi"><span class="kpi-ico t-teal"><i class="bi bi-mic"></i></span><div><small>Voice recognition</small><strong class="sm" id="kpi-voice">Checking</strong></div></div>
+</section>
+
+<section class="card voice-card" id="hero" data-state="idle">
+  <div class="voice-left">
+    <button type="button" class="mic-btn" id="mic-btn" aria-label="Toggle microphone"><i class="bi bi-mic-fill"></i></button>
+    <div class="viz" id="viz" aria-hidden="true"></div>
+    <h2>Hello, I'm JARVIS.</h2>
+    <p class="subtitle">Your personal voice-controlled desktop assistant.</p>
+    <div class="btn-row">
+      <button type="button" class="btn btn-primary" id="start-btn"><i class="bi bi-mic"></i> Start Listening</button>
+      <button type="button" class="btn" id="stop-btn"><i class="bi bi-stop-circle"></i> Stop Listening</button>
+    </div>
+    <p class="warn" id="support-warning" hidden>This browser has no speech recognition. Use Chrome or Edge, or type your command.</p>
+  </div>
+
+  <div class="voice-right" id="voice">
+    <div class="card-head" style="margin:0">
+      <h3>Conversation</h3>
+      <div class="head-tools">
+        <label class="inline-field">Language
+          <select id="lang-select"><option value="en-US">English</option><option value="bn-BD">বাংলা</option></select>
+        </label>
+        <span class="badge" id="state-badge" data-state="idle">Idle</span>
+      </div>
+    </div>
+    <div class="chat">
+      <div class="bubble you"><span>You</span><p id="recognized" class="muted">Press the mic or type a command.</p></div>
+      <div class="bubble"><span>JARVIS</span><p id="response" class="muted">Waiting for a command.</p></div>
+    </div>
+    <p class="hint" id="voice-note" hidden></p>
+    <div id="abort-box" class="notice notice-warning" hidden>
+      <span id="abort-text"></span>
+      <button type="button" class="btn btn-danger btn-sm" id="abort-btn">Abort shutdown</button>
+    </div>
+    <form id="text-form" class="text-form" autocomplete="off">
+      <input type="text" id="text-input" maxlength="200" placeholder="Type a command, e.g. open WhatsApp" aria-label="Type a command">
+      <button type="submit" class="btn btn-primary"><i class="bi bi-send"></i> Send</button>
+    </form>
+  </div>
+</section>
+
+<section class="card" aria-label="Quick actions">
+  <div class="card-head"><h3>Quick actions</h3><small>Each one runs the same checked command handler as your voice.</small></div>
+  <div class="group"><h4>Information</h4><div class="actions">
+    <button class="action" data-command="What time is it?"><span class="ico t-blue"><i class="bi bi-clock"></i></span><span><b>Time</b><small>Tell me the time</small></span></button>
+    <button class="action" data-command="What is today's date?"><span class="ico t-blue"><i class="bi bi-calendar3"></i></span><span><b>Date</b><small>Tell me today's date</small></span></button>
+    <button class="action" data-command="What's the weather?"><span class="ico t-amber"><i class="bi bi-cloud-sun"></i></span><span><b>Weather</b><small>Current conditions</small></span></button>
+    <button class="action" data-prefill="Search Google for "><span class="ico t-slate"><i class="bi bi-search"></i></span><span><b>Search Google</b><small>Type what to look up</small></span></button>
+  </div></div>
+  <div class="group"><h4>Apps</h4><div class="actions">
+    <button class="action" data-command="Open Chrome"><span class="ico t-rose"><i class="bi bi-browser-chrome"></i></span><span><b>Chrome</b><small>Open the browser</small></span></button>
+    <button class="action" data-command="Open VS Code"><span class="ico t-blue"><i class="bi bi-code-square"></i></span><span><b>VS Code</b><small>Open the editor</small></span></button>
+    <button class="action" data-command="Open Calculator"><span class="ico t-slate"><i class="bi bi-calculator"></i></span><span><b>Calculator</b><small>Open Calculator</small></span></button>
+    <button class="action" data-command="Open Notepad"><span class="ico t-slate"><i class="bi bi-journal-text"></i></span><span><b>Notepad</b><small>Open Notepad</small></span></button>
+  </div></div>
+  <div class="group"><h4>Web and messaging</h4><div class="actions">
+    <button class="action" data-command="Open YouTube"><span class="ico t-rose"><i class="bi bi-youtube"></i></span><span><b>YouTube</b><small>Open youtube.com</small></span></button>
+    <button class="action" data-command="Open GitHub"><span class="ico t-violet"><i class="bi bi-github"></i></span><span><b>GitHub</b><small>Open github.com</small></span></button>
+    <button class="action" data-command="Open WhatsApp"><span class="ico t-green"><i class="bi bi-whatsapp"></i></span><span><b>WhatsApp</b><small>App, or web if missing</small></span></button>
+    <button class="action" data-command="Open Telegram"><span class="ico t-teal"><i class="bi bi-telegram"></i></span><span><b>Telegram</b><small>App, or web if missing</small></span></button>
+  </div></div>
+  <div class="group"><h4>System</h4><div class="actions">
+    <button class="action" data-command="Open This PC"><span class="ico t-blue"><i class="bi bi-pc-display"></i></span><span><b>This PC</b><small>Drives and folders</small></span></button>
+    <button class="action" data-command="Open Recycle Bin"><span class="ico t-slate"><i class="bi bi-trash3"></i></span><span><b>Recycle Bin</b><small>View deleted files</small></span></button>
+    <button class="action" data-command="Open Settings"><span class="ico t-slate"><i class="bi bi-gear"></i></span><span><b>Windows Settings</b><small>Open system settings</small></span></button>
+    <button class="action" data-command="Take a screenshot"><span class="ico t-teal"><i class="bi bi-camera"></i></span><span><b>Screenshot</b><small>Save your screen</small></span></button>
+    <button class="action" data-command="Volume up"><span class="ico t-amber"><i class="bi bi-volume-up"></i></span><span><b>Volume up</b><small>About 10%</small></span></button>
+    <button class="action" data-command="Volume down"><span class="ico t-amber"><i class="bi bi-volume-down"></i></span><span><b>Volume down</b><small>About 10%</small></span></button>
+    <button class="action" data-command="Mute"><span class="ico t-amber"><i class="bi bi-volume-mute"></i></span><span><b>Mute</b><small>Toggle mute</small></span></button>
+    <button class="action danger" data-command="Shutdown computer"><span class="ico t-rose"><i class="bi bi-power"></i></span><span><b>Shut down</b><small>Asks you to confirm</small></span></button>
+  </div></div>
+</section>
+
+<section class="card">
+  <div class="card-head"><h3>Recent commands</h3><a href="{% url 'history' %}" class="link">View all</a></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Command</th><th>Result</th><th>Time</th><th>Status</th></tr></thead>
+      <tbody id="recent-body">
+        {% for h in recent %}
+        <tr><td>{{ h.command_text }}</td><td>{{ h.result }}</td><td>{{ h.created_at|date:"M d, h:i A" }}</td>
+            <td><span class="badge" data-state="{{ h.status }}">{{ h.get_status_display }}</span></td></tr>
+        {% empty %}
+        <tr class="empty-row"><td colspan="4" class="muted">No commands yet. Run a quick action to get started.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<dialog id="shutdown-dialog" class="dialog">
+  <h3><i class="bi bi-exclamation-triangle"></i> Shut down this computer?</h3>
+  <p>Windows will shut down 30 seconds after you confirm, and you can abort during that time. This request expires in <strong id="dialog-timer">60</strong>s.</p>
+  <div class="btn-row">
+    <button type="button" class="btn" id="cancel-shutdown">Cancel</button>
+    <button type="button" class="btn btn-danger" id="confirm-shutdown">Confirm Shutdown</button>
+  </div>
+</dialog>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/fx.js' %}"></script>{% endblock %}
